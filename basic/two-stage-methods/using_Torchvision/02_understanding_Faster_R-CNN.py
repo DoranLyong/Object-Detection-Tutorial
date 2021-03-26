@@ -166,8 +166,8 @@ object_score, bbox_locs = rpn_layer(feature_map.unsqueeze(0))
 
 
 print(f"Object score: {torch.stack(object_score).squeeze(0).shape}") # [1, 9, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스에 위치는 객체 분류 
-print(f"Bbox locs: {torch.stack(bbox_locs).squeeze(0).shape}") # [1, 36, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스 위치 
-
+print(f"Bbox locs: {torch.stack(bbox_locs).squeeze(0).shape}")  # [1, 36, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스 위치 
+                                                                # torch.stack() ; (ref) https://wikidocs.net/52846
 
 
 # %%
