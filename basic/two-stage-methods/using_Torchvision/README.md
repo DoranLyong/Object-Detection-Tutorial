@@ -21,3 +21,11 @@
 ```bash
 ~$ python 02_understanding_Faster_R-CNN.py
 ```
+
+
+<br/>
+
+## Fine-tuning(using `Torchvision`)
+```bash
+~$ python 03_Fine-tuning_Faster_R-CNN.py
+```
