@@ -8,7 +8,7 @@
 
 
 """
-(ref) https://github.com/pytorch/vision/tree/master/torchvision/models/detection
+pytorch/vision/torchvision, github (ref) https://github.com/pytorch/vision/tree/master/torchvision/models/detection
 
 
 Faster R-CNN의 구성 요소에 대해 알아보자. 
@@ -17,10 +17,7 @@ Faster R-CNN의 구성 요소에 대해 알아보자.
 * Region-Proposal network (RPN)
 * ROIPooling layer 
 * ROI Heads 
-
 """
-
-
 
 
 
@@ -152,7 +149,7 @@ print(f"The RPN layer: \n\n {rpn_layer}")
 
 
 
-# %%
+# %% RPN 출력 확인 
 """ Forward the output of backbone to the `RPNHead()` and look at the output size.
 
     [backbone] -> feature_map -> [RPNHead] -> ? 
@@ -166,8 +163,59 @@ object_score, bbox_locs = rpn_layer(feature_map.unsqueeze(0))
 
 
 print(f"Object score: {torch.stack(object_score).squeeze(0).shape}") # [1, 9, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스에 위치는 객체 분류 
-print(f"Bbox locs: {torch.stack(bbox_locs).squeeze(0).shape}")  # [1, 36, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스 위치 
+print(f"Bbox locs: {torch.stack(bbox_locs).squeeze(0).shape}")  # [1, 36, 24, 24] ; 24x24 feature_map 에서 9 종의 앵커 박스 위치 := 9 x 4 
                                                                 # torch.stack() ; (ref) https://wikidocs.net/52846
 
 
-# %%
+# %% 앵커 생성 
+""" At this point, we have just created the RPN but we haven't set (or associated) the anchors with the channels yet.
+    So we need to create these anchors.
+
+    Fortunately, `torchvision` also has a function which generates the anchor boxes with respective aspect ratios.
+"""
+anchor_generator = rpn.AnchorGenerator(sizes=((128, 256, 512),), aspect_ratios=(0.5, 1, 2)) # 앵커 생성 객체 초기화 
+
+
+"""The above line generates the following anchors.
+    [ (128, 64), (128, 128), (128, 256), 
+    (256, 128), (256, 256), (256,512), 
+    (512, 256), (512, 512), (512, 1024)]
+
+    높이 := 128 일 때, aspect_ratio 를 0.5, 1, 2 비율로 맞추면 => (128, 64,), (128, 128), (128, 256)
+    so on... 
+"""
+
+
+# %% RPN + anchor generator 결합 
+""" Now that we have created the `rpn_layer` and the anchors i.e `anchor_generator`, 
+    lets fuse these two into a single block.
+
+    Torchvision provides us a class `RegionProposalLayer()` whose inputs will be the `rpn-layer`, the `anchors` and a few parameters.
+
+    There are a few technical details about the parameters such as the `nms_threshold`, `foreground_iou_threshold`, 
+    `background_iou_threshold`, etc which will not be covered here.
+    These parameters' source can be found in the Faster-RCNN research paper itself.
+"""
+
+rpn_pre_nms = dict(training=2000, testing=1000)
+rpn_post_nms = dict(training=2000, testing=1000)
+
+region_proposer = rpn.RegionProposalNetwork(    anchor_generator,   # 생성된 앵커 
+                                                rpn_layer,          # RPN 계층  
+                                                0.5, 0.5, 512, 0.5, 
+                                                rpn_pre_nms, 
+                                                rpn_post_nms, 0.7 
+                                            )
+region_proposer.training = False
+
+print(f"The Region-Proposal-Network is: \n\n {region_proposer}")
+
+
+""" As you see, the whole `Region Proposal Network` consists of the `anchor_generator` i.e the anchors, 
+    and the `RPNHead` which is the rpn-layer.
+"""
+
+
+# %% Let's see how many objects (or locations) the RPN can detect out of the `(9*24*24) = 5184` possible locations
+from torchvision.models.detection import image_list
+
