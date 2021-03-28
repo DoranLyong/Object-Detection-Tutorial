@@ -11,12 +11,16 @@
 pytorch/vision/torchvision, github (ref) https://github.com/pytorch/vision/tree/master/torchvision/models/detection
 
 
-COCO dataset을 활용한 Fine-tuning 연습 
+Fine-tuning 셋업 연습 
 
-* backbone network 
-* Region-Proposal network (RPN)
-* ROIPooling layer 
-* ROI Heads 
+1. Set device  
+2. Load pre-trained Faster R-CNN  
+3. Prepare labeling data  
+4. Model Inference     
+5. Model Training
+6. Model Building Blocks
+7. rpn (Region Proposal Network)
+8. roi_heads (RoI Pooling)
 """
 
 #%% 임포트 패키지 
